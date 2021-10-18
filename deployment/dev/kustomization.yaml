@@ -11,4 +11,4 @@ images:
   newTag: 3f520d48
 replicas:
 - name: gitops-webapp
-  count: 2
+  count: 1
