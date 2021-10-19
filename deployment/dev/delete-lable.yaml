@@ -1,0 +1,15 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    $patch: delete
+  name: gitops-webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      $patch: delete
+  template:
+    metadata:
+      labels:
+        $patch: delete
