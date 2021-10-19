@@ -12,3 +12,6 @@ images:
 replicas:
 - name: gitops-webapp
   count: 1
+namePrefix: overlay-u
+commonLabels:
+    auto: label
