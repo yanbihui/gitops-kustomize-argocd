@@ -16,4 +16,4 @@ namePrefix: overlay-u-
 patchesStrategicMerge:
 - delete-lable.yaml
 commonLabels:
-    k8s-app: appname
+    appname: appname
