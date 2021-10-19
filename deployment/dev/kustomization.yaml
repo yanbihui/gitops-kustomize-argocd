@@ -23,6 +23,6 @@ patchesStrategicMerge:
 - delete-lable.yaml
 # 增加lable
 commonLabels:
-    appname: appname
+  appname: appname
 commonAnnotations:
-     oncallPager: 800-555-1212
+  oncallPager: 800-555-1212
