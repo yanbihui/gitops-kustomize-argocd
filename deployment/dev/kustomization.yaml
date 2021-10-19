@@ -1,19 +1,28 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
+# 引入需要部署的资源
 - namespace.yaml
 - deployment.yaml
 - ingress.yaml
 - service.yaml
+# 部署的空间
 namespace: dev
+# 修改镜像
 images:
 - name: cnych/gitops-webapp
   newTag: 3f520d48
+# 修改副本数量
 replicas:
 - name: gitops-webapp
   count: 1
+# name增加前缀
 namePrefix: overlay-u-
+# 引入当前文件夹下的yaml文件进行删除操作
 patchesStrategicMerge:
 - delete-lable.yaml
+# 增加lable
 commonLabels:
     appname: appname
+commonAnnotations:
+     oncallPager: 800-555-1212
