@@ -12,6 +12,8 @@ images:
 replicas:
 - name: gitops-webapp
   count: 1
-namePrefix: overlay-u
+namePrefix: overlay-u-
+patchesStrategicMerge:
+- delete-lable.yaml
 commonLabels:
     auto: label
