@@ -1,0 +1,136 @@
+
+# Git Resource
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: git-input
+spec:
+  type: git
+  params:
+  - name: revison
+    value: master
+  - name: url
+    value: https://github.com/yanbihui/gitops-kustomize-argocd.git
+---
+# Registry Resource
+apiVersion: tekton.dev/v1alpha1
+kind: PipelineResource
+metadata:
+  name: image-output
+spec:
+  type: image
+  params:
+    - name: url
+      value: registry.cn-hangzhou.aliyuncs.com/yanbihui/demo
+---
+# Git Repo/Docker Registry Authentication
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tekton-basic-user-pass-git
+  # annotations:
+  #   tekton.dev/git-0: https://github.com
+type: kubernetes.io/basic-auth
+stringData:
+  username: "账号"
+  password: "密码"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tekton-basic-user-pass-registry
+  annotations:
+    tekton.dev/docker-0: https://registry.cn-hangzhou.aliyuncs.com
+type: kubernetes.io/basic-auth
+stringData:
+  username: "账号"
+  password: "密码"
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tekton-git-and-registry
+secrets:
+  - name: tekton-basic-user-pass-git
+  - name: tekton-basic-user-pass-registry
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tekton-cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: tekton-git-and-registry
+    namespace: tekton-pipelines
+roleRef:
+  kind: ClusterRole
+  name: cluster-admin
+  apiGroup: rbac.authorization.k8s.io
+---
+# Task
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata: 
+  name: task-build-image
+spec:
+  params:
+    - name: pathToDockerfile
+      type: string
+      description: The Path to the dockerfile to build
+      default: /workspace/docker-source/Dockerfile
+    - name: pathToContext
+      type: string
+      description: The build context used by kaniko
+      default: /workspace/docker-source
+    - name: imageTag
+      type: string
+      description: image tag
+      default: latest
+
+  resources:
+    inputs:
+      - name: docker-source
+        type: git
+    outputs:
+      - name: buildImage
+        type: image
+  
+  steps:
+    - name: build-and-push
+      image: aiotceo/kaniko-executor:v1.6.0
+      env:
+        - name: "DOCKER_CONFIG"
+          value: "/tekton/home/.docker"
+      command:
+        - /kaniko/executor
+      args:
+        - --insecure
+        - --dockerfile=$(params.pathToDockerfile)
+        - --destination=$(resources.outputs.buildImage.url):$(params.imageTag)
+        - --context=$(params.pathToContext)
+---
+# TaskRun
+apiVersion: tekton.dev/v1alpha1
+kind: TaskRun
+metadata:
+  name: taskrun-build-image
+spec:
+  serviceAccountName: tekton-git-and-registry
+  taskRef:
+    name: task-build-image
+  params:
+    - name: pathToDockerfile
+      value: /workspace/docker-source/Dockerfile
+    - name: pathToContext
+      value: /workspace/docker-source
+    - name: imageTag
+      value: v1
+  resources:
+    inputs:
+      - name: docker-source
+        resourceRef:
+          name: git-input
+    outputs:
+      - name: buildImage
+        resourceRef:
+          name: image-output
