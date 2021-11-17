@@ -1,0 +1,43 @@
+# Task
+apiVersion: tekton.dev/v1alpha1
+kind: Task
+metadata:
+  name: task-build-image
+spec:
+  params:
+    - name: pathToDockerfile
+      type: string
+      description: The Path to the dockerfile to build
+      default: /workspace/docker-source/Dockerfile
+    - name: pathToContext
+      type: string
+      description: The build context used by kaniko
+      default: /workspace/docker-source
+    - name: imageTag
+      type: string
+      description: image tag
+      default: latest
+    - name: gitBranch
+      default: master
+
+  resources:
+    inputs:
+      - name: docker-source
+        type: git
+    outputs:
+      - name: buildImage
+        type: image
+
+  steps:
+    - name: build-and-push
+      image: aiotceo/kaniko-executor:v1.6.0
+      env:
+        - name: "DOCKER_CONFIG"
+          value: "/tekton/home/.docker"
+      command:
+        - /kaniko/executor
+      args:
+        - --insecure
+        - --dockerfile=$(params.pathToDockerfile)
+        - --destination=$(resources.outputs.buildImage.url):$(params.imageTag)
+        - --context=$(params.pathToContext)
