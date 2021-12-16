@@ -7,7 +7,7 @@ resources:
 - ingress.yaml
 - service.yaml
 # 部署的空间
-namespace: dev
+#namespace: dev
 # 修改镜像
 images:
 - name: cnych/gitops-webapp
